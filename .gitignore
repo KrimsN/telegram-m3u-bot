@@ -11,3 +11,6 @@ wheels/
 
 # Environment variables
 .env
+
+# Local project notes for Claude
+CLAUDE.md
