@@ -13,10 +13,14 @@ target-version = "py313"
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-    "D",        # pydocstyle
     "COM812",   # missing-trailing-comma (formatter conflict)
     "ISC001",   # single-line-implicit-string-concatenation (formatter conflict)
+    "D203",     # one-blank-line-before-class (conflicts with D211)
+    "D213",     # multi-line-summary-second-line (conflicts with D212)
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.format]
 quote-style = "double"
