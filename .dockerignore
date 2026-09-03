@@ -1,0 +1,10 @@
+.venv
+.git
+.env
+__pycache__
+*.pyc
+.ruff_cache
+*.session
+*.session-journal
+README.md
+CLAUDE.md
