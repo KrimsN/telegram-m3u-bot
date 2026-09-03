@@ -12,3 +12,7 @@ wheels/
 # Environment variables
 .env
 
+# Pyrogram/kurigram session files
+*.session
+*.session-journal
+
