@@ -17,6 +17,7 @@ ignore = [
     "ISC001",   # single-line-implicit-string-concatenation (formatter conflict)
     "D203",     # one-blank-line-before-class (conflicts with D211)
     "D213",     # multi-line-summary-second-line (conflicts with D212)
+    "CPY001",   # missing copyright notice (no copyright policy for this project)
 ]
 
 [tool.ruff.lint.pydocstyle]
