@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 _CHUNK_SIZE = 1024 * 1024
 _HTTP_PARTIAL_CONTENT = 206
-_WRITE_TIMEOUT_SECONDS = 15
+_WRITE_TIMEOUT_SECONDS = 30 * 60
 
 
 def create_app(client: Client) -> web.Application:
@@ -57,7 +57,13 @@ async def _handle_stream(request: web.Request) -> web.StreamResponse:
         response.headers["Content-Range"] = f"bytes {start}-{end}/{file_size}"
     await response.prepare(request)
 
-    await _write_range(client, message, start, end, response)
+    completed = await _write_range(client, message, start, end, response)
+    if not completed:
+        # Клиент завис (пауза) или отвалился: честный EOF выглядел бы для плеера как
+        # конец файла, поэтому рвём соединение, чтобы он переподключился и запросил новый Range.
+        if request.transport is not None:
+            request.transport.abort()
+        return response
     await response.write_eof()
     return response
 
@@ -79,7 +85,8 @@ async def _write_range(
     start: int,
     end: int,
     response: web.StreamResponse,
-) -> None:
+) -> bool:
+    """Write the requested byte range; return False if the client stalled or disconnected."""
     offset_chunks = start // _CHUNK_SIZE
     skip = start % _CHUNK_SIZE
     remaining = end - start + 1
@@ -96,10 +103,11 @@ async def _write_range(
             try:
                 await asyncio.wait_for(response.write(chunk), timeout=_WRITE_TIMEOUT_SECONDS)
             except (ConnectionResetError, ConnectionError, TimeoutError):
-                return
+                return False
             remaining -= len(chunk)
             if remaining <= 0:
-                return
+                return True
+        return remaining <= 0
     finally:
         # A seek in the player abandons this request mid-stream (disconnect or
         # task cancellation); without an explicit aclose() the semaphore inside
